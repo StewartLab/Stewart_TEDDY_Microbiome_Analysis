@@ -1,7 +1,7 @@
 # Stewart_TEDDY_Microbiome_Analysis
 Temporal Development of the Gut Microbiome in Early Childhood - The TEDDY Study
 
-TEDDY study infant gut microbiome analyses by Baylor College of Medicine
+# TEDDY study infant gut microbiome analyses by Baylor College of Medicine
 
 This repository contains Code for the transition model showing the progression of samples through each DMM cluster, which are presented in Figure 1 and Extended Data Figure 2 of the "Temporal Development of the Gut Microbiome in Early Childhood - The TEDDY Study" by Stewart et al. (citation to be included).
 
