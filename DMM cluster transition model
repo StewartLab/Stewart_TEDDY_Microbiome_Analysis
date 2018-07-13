@@ -1,0 +1,597 @@
+
+#==============================================================================
+#=-----------------------------------------------------------------------------
+# Daniel Smith and Christopher Stewart
+# Baylor College of Medicine
+#
+#
+# ==========================
+#
+#   Script for looking at sample clusters throughout
+#   a timecourse with multiple subjects.
+# 
+#
+#=-----------------------------------------------------------------------------
+#==============================================================================
+
+library("ggplot2")
+library("igraph")
+library("slam")
+library("scales")
+
+
+
+#==============================================================================
+# Load the pre-computed datasets
+#==============================================================================
+
+
+Metadata <- download.aws("")
+GenusMtx <- download.aws("")
+
+
+
+#==============================================================================
+# Top 25 Genera across the different DMM Clusters as a Heatmap
+#==============================================================================
+
+CLUSTER_COLUMN <- "DMM_Cluster"
+
+md     <- Metadata
+genera <- t(t(GenusMtx) / colSums(GenusMtx))
+
+anno <- md[colnames(genera), CLUSTER_COLUMN, drop=FALSE]
+anno[[CLUSTER_COLUMN]] <- factor(anno[[CLUSTER_COLUMN]])
+anno <- anno[order(anno[[CLUSTER_COLUMN]]), , drop=FALSE]
+
+top25 <- head(names(rev(sort(rowSums(genera)))), 25)
+
+colors <- colorRampPalette(rev(RColorBrewer::brewer.pal(n=7, name="RdYlBu")), bias=3)(100)  #use to set colour (name =) and scale (bias =)
+
+mat <- genera[top25, rownames(anno), drop=FALSE]
+mat <- t(apply(mat, 1L, scales::rescale))   #uncomment to normalize each taxa (row)
+
+pheatmap::pheatmap(
+  mat            = mat, 
+  color          = colors,   #uncheck if setting the colour scale manual
+  annotation_col = anno, 
+  show_colnames  = FALSE,
+  cluster_rows   = FALSE,
+  cluster_cols   = FALSE,
+  gaps_col       = cumsum(unname(table(anno[[CLUSTER_COLUMN]]))),
+  labels_row     = sub("^.*__", "", top25)
+)
+
+# remove('CLUSTER_COLUMN')
+# remove('anno', 'genera', 'md', 'top30', 'mat')
+
+
+
+#=========
+#manual order of bacteria
+#=========
+
+top25 <- c('Bacteria; __Actinobacteria; __Actinobacteria; __Bifidobacteriales; __Bifidobacteriaceae; __Bifidobacterium',
+                    'Bacteria; __Firmicutes; __Bacilli; __Lactobacillales; __Enterococcaceae; __Enterococcus',
+                   'Bacteria; __Firmicutes; __Negativicutes; __Selenomonadales; __Veillonellaceae; __Veillonella',
+                   'Bacteria; __Firmicutes; __Bacilli; __Lactobacillales; __Streptococcaceae; __Streptococcus',
+                   'Bacteria; __Proteobacteria; __Gammaproteobacteria; __Enterobacteriales; __Enterobacteriaceae; __Enterobacter',
+                   'Bacteria; __Proteobacteria; __Gammaproteobacteria; __Enterobacteriales; __Enterobacteriaceae; __Escherichia_Shigella',
+                   'Bacteria; __Bacteroidetes; __Bacteroidia; __Bacteroidales; __Bacteroidaceae; __Bacteroides',
+                    'Bacteria; __Verrucomicrobia; __Verrucomicrobiae; __Verrucomicrobiales; __Verrucomicrobiaceae; __Akkermansia',
+                   'Bacteria; __Firmicutes; __Clostridia; __Clostridiales; __Lachnospiraceae; ___Ruminococcus_gnavus_group',
+                   'Bacteria; __Firmicutes; __Erysipelotrichia; __Erysipelotrichales; __Erysipelotrichaceae; __Erysipelatoclostridium',
+                   'Bacteria; __Firmicutes; __Clostridia; __Clostridiales; __Lachnospiraceae; __Tyzzerella_4',
+                   'Bacteria; __Firmicutes; __Clostridia; __Clostridiales; __Lachnospiraceae; __Lachnoclostridium',
+                   'Bacteria; __Firmicutes; __Clostridia; __Clostridiales; __Lachnospiraceae; __Blautia',
+                   'Bacteria; __Firmicutes; __Clostridia; __Clostridiales; __Lachnospiraceae; __Lachnospiraceae_UCG_008',
+                   'Bacteria; __Firmicutes; __Clostridia; __Clostridiales; __Lachnospiraceae; __Anaerostipes',
+                   'Bacteria; __Firmicutes; __Clostridia; __Clostridiales; __Lachnospiraceae; ___Eubacterium_rectale_group',
+                   'Bacteria; __Firmicutes; __Clostridia; __Clostridiales; __Clostridiaceae_1; __Clostridium_sensu_stricto_1',
+                   'Bacteria; __Firmicutes; __Clostridia; __Clostridiales; __Peptostreptococcaceae; __Romboutsia',
+                   'Bacteria; __Firmicutes; __Clostridia; __Clostridiales; __Peptostreptococcaceae; __Intestinibacter',
+                   'Bacteria; __Firmicutes; __Clostridia; __Clostridiales; __Lachnospiraceae; __Fusicatenibacter',
+                   'Bacteria; __Firmicutes; __Clostridia; __Clostridiales; __Ruminococcaceae; __Ruminococcus_2',
+                   'Bacteria; __Firmicutes; __Clostridia; __Clostridiales; __Ruminococcaceae; __Faecalibacterium',
+                   'Bacteria; __Firmicutes; __Clostridia; __Clostridiales; __Ruminococcaceae; __Subdoligranulum',
+                    'Bacteria; __Firmicutes; __Clostridia; __Clostridiales; __Ruminococcaceae; ___Eubacterium_coprostanoligenes_group',
+                   'Bacteria; __Firmicutes; __Negativicutes; __Selenomonadales; __Veillonellaceae; __Dialister')
+
+mat   <- genera[top25, rownames(anno), drop=FALSE]
+mat   <- t(apply(mat, 1L, scales::rescale))   #uncomment to normalize each taxa (row)
+
+pheatmap::pheatmap(
+  mat            = mat, 
+  color          = colors,   #uncheck if setting the colour scale manual
+  annotation_col = anno, 
+  show_colnames  = FALSE,
+  cluster_rows   = FALSE,
+  cluster_cols   = FALSE,
+  gaps_col       = cumsum(unname(table(anno[[CLUSTER_COLUMN]]))),
+  labels_row     = sub("^.*; __", "", rownames(mat))
+)
+
+
+# remove('CLUSTER_COLUMN')
+# remove('anno', 'species', 'md', 'top25', 'mat')
+
+
+
+
+
+#==============================================================================
+# DMM Transitions Circle
+#   - Answers: how often is cluster y preceded by cluster x?
+#==============================================================================
+
+#----------------------------------------------------------------------
+# Modify these values as you please
+#----------------------------------------------------------------------
+
+MAX_TIME_DELTA <- 120
+TIME_COLUMN    <- "Age_in_Days"
+CLUSTER_COLUMN <- "DMM_Cluster"
+SUBJECT_COLUMN <- "SubjectID"
+
+md <- Metadata
+
+
+#----------------------------------------------------------------------
+# Double check for the user that they provided valid column names
+#----------------------------------------------------------------------
+
+vars <- c(TIME_COLUMN, CLUSTER_COLUMN, SUBJECT_COLUMN)
+if (!all(vars %in% colnames(md)))
+  stop(sprintf("Column name not found: %s", paste(collapse=", ", setdiff(vars, colnames(md)))))
+
+
+#----------------------------------------------------------------------
+# Filter out rows with missing data for time, subject, or cluster
+#----------------------------------------------------------------------
+
+md <- md[!is.na(md[[TIME_COLUMN]]) & !is.na(md[[CLUSTER_COLUMN]]) & !is.na(md[[SUBJECT_COLUMN]]),]
+
+
+#----------------------------------------------------------------------
+# Assemble a matrix to represent the number each transition
+#----------------------------------------------------------------------
+
+stateNames       <- unique(as.character(sort(md[[CLUSTER_COLUMN]])))
+nStates          <- length(stateNames)
+transitionMatrix <- matrix(0, nrow=nStates, ncol=nStates, dimnames=list(stateNames, stateNames))
+
+plyr::d_ply(md[,vars], SUBJECT_COLUMN, function (x) {
+  
+  if (nrow(x) < 2) return (NULL)
+  
+  x <- x[order(x[[TIME_COLUMN]]),,drop=FALSE]
+  
+  for (i in seq_len(nrow(x) - 1)) {
+    
+    t1 <- x[i,   TIME_COLUMN]
+    t2 <- x[i+1, TIME_COLUMN]
+    if (t2 - t1 > MAX_TIME_DELTA) next
+    
+    c1 <- as.character(x[i,   CLUSTER_COLUMN])
+    c2 <- as.character(x[i+1, CLUSTER_COLUMN])
+    transitionMatrix[c1, c2] <<- transitionMatrix[c1, c2] + 1
+  }
+})
+
+
+#----------------------------------------------------------------------
+# Normalize transition matrix so rows sum to 1
+#----------------------------------------------------------------------
+
+transitionMatrix <- transitionMatrix / rowSums(transitionMatrix)
+
+
+#----------------------------------------------------------------------
+# Create iGraph network
+#----------------------------------------------------------------------
+
+g <- graph.adjacency(transitionMatrix, mode="directed", weighted=TRUE)
+
+
+#----------------------------------------------------------------------
+# Create a function to generate a continuous color palette
+#----------------------------------------------------------------------
+
+val2rgb <- colorRamp(rev(heat.colors(10)[1:6]), bias = 2)
+
+
+#----------------------------------------------------------------------
+# Generate the figure and color bar legend
+#----------------------------------------------------------------------
+
+plot.igraph(
+  x               = g,
+  xlim            = c(0, .8),
+  ylim            = c(-1, 1),
+  layout          = layout_in_circle,
+  vertex.size     = colSums(transitionMatrix) * 20,
+  edge.width      = E(g)$weight * 20,
+  edge.color      = rgb(val2rgb(E(g)$weight) / 255),
+  edge.loop.angle = scales::rescale(seq_along(E(g)), to=c(0, -2 * 3.14)) )
+
+legend(
+  x      = 1.5, 
+  y      = 1, 
+  fill   = rgb(val2rgb(c(0, .05, .1, .15, .2, .5, .75, 1)) / 255), 
+  legend = c("0%", "5%", "10%", "15%", "20%", "50%", "75%", "100%"), 
+  title  = "Transition\nFrequency", 
+  bty    = "n" )
+
+
+#----------------------------------------------------------------------
+# Save final figure to a pdf file
+#----------------------------------------------------------------------
+
+dev.copy2pdf(file="16S_OTU_DMM_Transitions.pdf")
+
+
+#----------------------------------------------------------------------
+# Cleanup
+#----------------------------------------------------------------------
+
+remove('CLUSTER_COLUMN', 'MAX_TIME_DELTA', 'SUBJECT_COLUMN', 'TIME_COLUMN')
+remove('g', 'md', 'nStates', 'stateNames', 'transitionMatrix', 'val2rgb', 'vars')
+
+
+
+
+
+
+
+
+
+#==============================================================================
+# Sample Overview
+#   - Shows each sample for each subject colored by a variable
+#==============================================================================
+
+#----------------------------------------------------------------------
+# Modify these values as you please
+#----------------------------------------------------------------------
+
+TIME_COLUMN    <- "Age_in_Months"
+TIME_MIN_MAX   <- c(0, 40)
+COLOR_COLUMN   <- "DMM_Cluster"
+SUBJECT_COLUMN <- "SubjectID"
+FACET_COLUMN   <- "Birth_Mode_Simple"
+
+md <- Metadata
+
+
+#----------------------------------------------------------------------
+# Double check for the user that they provided valid column names
+#----------------------------------------------------------------------
+
+vars <- c(TIME_COLUMN, COLOR_COLUMN, SUBJECT_COLUMN, FACET_COLUMN)
+if (!all(vars %in% colnames(md)))
+  stop(sprintf("Column name not found: %s", paste(collapse=", ", setdiff(vars, colnames(md)))))
+
+
+#----------------------------------------------------------------------
+# Probably want the COLOR_COLUMN to be categorical
+#----------------------------------------------------------------------
+if (length(unique(md[[COLOR_COLUMN]])) < 20)
+  md[[COLOR_COLUMN]] <- as.character(md[[COLOR_COLUMN]])
+
+
+#----------------------------------------------------------------------
+# Filter out rows with missing data or outside specified time range
+#----------------------------------------------------------------------
+
+md <- md[ !is.na(md[[TIME_COLUMN]]) & 
+          !is.na(md[[COLOR_COLUMN]]) & 
+          !is.na(md[[SUBJECT_COLUMN]]) &
+          !is.na(md[[FACET_COLUMN]]), , drop=FALSE]
+
+md <- md[ md[[TIME_COLUMN]] >= min(TIME_MIN_MAX) & 
+          md[[TIME_COLUMN]] <= max(TIME_MIN_MAX), , drop=FALSE]
+
+
+#----------------------------------------------------------------------
+# Generate the figure and color bar legend
+#----------------------------------------------------------------------
+
+ggplot(md) + 
+  ggtitle("16S OTU DMM Sample Overview") + 
+  geom_point(aes_string(x = TIME_COLUMN, y = SUBJECT_COLUMN, color = COLOR_COLUMN)) +
+  facet_grid(as.formula(sprintf("%s ~ .", FACET_COLUMN)), scales="free_y", space="free_y") +
+  theme_bw() + 
+  theme(
+    axis.title.x      = element_text(size=8),
+    axis.text.x       = element_text(size=8),
+    axis.title.y      = element_text(size=8),
+    axis.text.y       = element_text(size=2),
+    axis.ticks.y      = element_line(size=0.2),
+    plot.title        = element_text(size=8),
+    legend.text       = element_text(size=7),
+    legend.title      = element_text(size=8),
+    legend.key.height = unit(0.15, "in"),
+    legend.key.width  = unit(0.15, "in"),
+    legend.background = element_blank(),
+    legend.margin     = margin(rep(unit(0,"mm"), 4)),
+    plot.margin       = unit(c(0.2,0,0,0),"mm"),
+    strip.text        = element_text(size=8) )
+
+
+#----------------------------------------------------------------------
+# Save final figure to a pdf file
+#----------------------------------------------------------------------
+
+ggsave(file = "16S_OTU_DMM_Schedule.pdf", width=8, height=20)
+
+
+#----------------------------------------------------------------------
+# Cleanup
+#----------------------------------------------------------------------
+
+remove('COLOR_COLUMN', 'FACET_COLUMN', 'SUBJECT_COLUMN', 'TIME_COLUMN', 'TIME_MIN_MAX')
+remove('md', 'vars')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#==============================================================================
+# DMM Transitions Over Time
+#   - Answers: is a cluster more common in a certain age range?
+#   - If a subject has >1 samples in a time range, only the first is used.
+#   - TIME_FUDGE is used to create a window around a specific time point
+#     - If TIME_FUDGE == 0, use only exact matches to the time point
+#     - When 0 < TIME_FUDGE < 1, interpret as a +/- percent, e.g. a TIME_FUDGE
+#       of .2 would give a time point of 10 the range 8-12.
+#     - When TIME_FUDGE >= 1, interpret as a +/- value, e.g. a TIME_FUDGE of 3
+#       would give a time point of 10 the range 7-13.
+#==============================================================================
+
+#----------------------------------------------------------------------
+# Modify these values as you please
+#----------------------------------------------------------------------
+
+TIME_COLUMN     <- "Age_in_Months"
+TIME_POINTS     <- c(4.5, 8.5, 12.5, 16.5, 20.5, 24.5, 28.5, 32.5, 36.5, 40.5, 44.5)
+TIME_FUDGE      <- 1.5            # +/- 1.5 months
+REQUIRE_ALL_TP  <- FALSE           # Drop subjects with missing time points
+CLUSTER_COLUMN  <- "DMM_Cluster"
+SUBJECT_COLUMN  <- "SubjectID"
+MINIMUM_PERCENT <- .04
+NODE_COLOR      <- "#072b5a"
+EDGE_COLOR      <- c("white", "orange", "darkorange", "orangered", "darkred")
+EDGE_PCT_RANGE  <- c(0, 0.24)   
+
+md     <- Metadata     #plots all
+#md <- Metadata[Metadata[['Birth_Mode_Simple']] == "Vaginal",,drop=FALSE] #00B9EB #plots specified  
+#md <- Metadata[Metadata[['Birth_Mode_Simple']] == "Caesarian",,drop=FALSE]  #ED5F16
+#md <- Metadata[Metadata[['Breastmilk_Combined']] == "Some_BM",,drop=FALSE]  #072b5a
+#md <- Metadata[Metadata[['Breastmilk_Combined']] == "After_BM",,drop=FALSE]  #ff0000
+# md <- Metadata[Metadata[['T1D_Outcome']] == "Before",,drop=FALSE]
+# md <- Metadata[Metadata[['T1D_Outcome']] == "Never",,drop=FALSE]
+# md <- Metadata[Metadata[['IA_Outcome']] == "Before",,drop=FALSE]
+# md <- Metadata[Metadata[['IA_Outcome']] == "Never",,drop=FALSE]
+
+
+
+#----------------------------------------------------------------------
+# Double check for the user that they provided valid column names
+#----------------------------------------------------------------------
+
+vars <- c(TIME_COLUMN, CLUSTER_COLUMN, SUBJECT_COLUMN)
+if (!all(vars %in% colnames(md)))
+  stop(sprintf("Column name not found: %s", paste(collapse=", ", setdiff(vars, colnames(md)))))
+if (nrow(md) == 0)
+  stop("Metadata object 'md' doesn't have any rows.")
+
+clusterNames <- unique(as.character(sort(md[[CLUSTER_COLUMN]])))
+timePtNames  <- unique(as.character(sort(TIME_POINTS)))
+stateNames   <- apply(expand.grid(clusterNames, timePtNames), 1L, paste, collapse="@")
+nStates      <- length(stateNames)
+
+
+#----------------------------------------------------------------------
+# Filter out rows with missing data for time, subject, or cluster
+#----------------------------------------------------------------------
+
+md <- md[!is.na(md[[TIME_COLUMN]]) & !is.na(md[[CLUSTER_COLUMN]]) & !is.na(md[[SUBJECT_COLUMN]]), vars, drop=FALSE]
+
+
+#----------------------------------------------------------------------
+# Map samples to time points. For multiple, retain only closest.
+#----------------------------------------------------------------------
+
+closestTP <- sapply(md[[TIME_COLUMN]], function (x) {
+  x <- TIME_POINTS[which.min(abs(x - TIME_POINTS))]
+})
+residuals <- abs(closestTP - md[[TIME_COLUMN]])
+
+md[[TIME_COLUMN]] <- closestTP
+
+if (TIME_FUDGE <  1) inRange <- residuals <= TIME_FUDGE * closestTP
+if (TIME_FUDGE >= 1) inRange <- residuals <= TIME_FUDGE
+
+md        <- md[inRange,,drop=FALSE]
+residuals <- residuals[inRange]
+
+md <- md[order(residuals),,drop=FALSE]
+md <- md[!duplicated(paste(md[[TIME_COLUMN]], md[[SUBJECT_COLUMN]])),,drop=FALSE]
+
+
+#----------------------------------------------------------------------
+# Optionally require a subject to have samples from all the time points
+#----------------------------------------------------------------------
+if (REQUIRE_ALL_TP) {
+  md <- plyr::ddply(md, SUBJECT_COLUMN, function (x) {
+    if (nrow(x) == length(TIME_POINTS)) return (x)
+    return (NULL)
+  })
+}
+timePtCounts <- table(md[[TIME_COLUMN]])
+nodeCounts   <- unlist(as.list(table(paste(sep="@", md[[CLUSTER_COLUMN]], md[[TIME_COLUMN]]))))
+nodeCounts   <- setNames(nodeCounts / timePtCounts[sub("^.*@", "", names(nodeCounts))], names(nodeCounts))
+
+#----------------------------------------------------------------------
+# Count the number of subjects at each time point and/or cluster
+#----------------------------------------------------------------------
+
+table(md$Age_in_Months, dnn = TIME_COLUMN)
+table(md$DMM_Cluster,   dnn = CLUSTER_COLUMN)
+table(md$DMM_Cluster, md$Age_in_Months, dnn = c(CLUSTER_COLUMN, TIME_COLUMN))
+
+
+#----------------------------------------------------------------------
+# Assemble a matrix to represent the number of each transition
+#----------------------------------------------------------------------
+
+transitionMatrix <- matrix(0, nrow=nStates, ncol=nStates, dimnames=list(stateNames, stateNames))
+
+md[[CLUSTER_COLUMN]] <- paste(sep="@", md[[CLUSTER_COLUMN]], md[[TIME_COLUMN]])
+md[[TIME_COLUMN]]    <- as.numeric(factor(md[[TIME_COLUMN]]))
+
+plyr::d_ply(md[,vars], SUBJECT_COLUMN, function (x) {
+  
+  if (nrow(x) < 2) return (NULL)
+  
+  x <- x[order(x[[TIME_COLUMN]]),,drop=FALSE]
+  
+  for (i in seq_len(nrow(x) - 1)) {
+    
+    t1 <- x[i,   TIME_COLUMN]
+    t2 <- x[i+1, TIME_COLUMN]
+    if (t2 - t1 > 1) next
+    
+    c1 <- as.character(x[i,   CLUSTER_COLUMN])
+    c2 <- as.character(x[i+1, CLUSTER_COLUMN])
+    transitionMatrix[c1, c2] <<- transitionMatrix[c1, c2] + 1
+  }
+})
+
+
+#----------------------------------------------------------------------
+# Rescale the transition matrix to percentages
+#----------------------------------------------------------------------
+indices <- sort(rep(1:length(timePtNames), length(clusterNames)))
+for (timePt in 1:(length(timePtNames) - 1)) {
+  i <- which(indices == timePt)
+  transitionMatrix[i,] <- transitionMatrix[i,] / sum(transitionMatrix[i,])
+}
+
+
+#----------------------------------------------------------------------
+# Sankey Diagram
+#----------------------------------------------------------------------
+
+# Nodes <- data.frame(
+#   'NodeID'  = stateNames,
+#   'Cluster' = sapply(stateNames, function (x) strsplit(x, '@', T)[[1]][[1]]))
+# 
+# Links <- with(
+#   subset(reshape2::melt(transitionMatrix), value > 0),
+#   data.frame(
+#     'Source' = as.numeric(factor(Var1, levels=stateNames)) - 1,
+#     'Target' = as.numeric(factor(Var2, levels=stateNames)) - 1,
+#     'Value'  = value ))
+# 
+# networkD3::sankeyNetwork(
+#   Links     = Links,
+#   Nodes     = Nodes,
+#   Source    = 'Source',
+#   Target    = 'Target',
+#   Value     = 'Value',
+#   NodeID    = 'NodeID',
+#   NodeGroup = 'Cluster',
+#   fontSize  = 10 )
+# 
+# remove('Links', 'Nodes')
+
+
+#----------------------------------------------------------------------
+# Drop cluster/timePt combos with zero observations (after filtering)
+#----------------------------------------------------------------------
+
+transitionMatrix[which(transitionMatrix < MINIMUM_PERCENT)] <- 0
+
+stateNames   <- stateNames[rowSums(transitionMatrix) | colSums(transitionMatrix)]
+clusterNames <- clusterNames[sapply(clusterNames, function (x) any(grep(sprintf("^%s@", x), stateNames)))]
+timePtNames  <- timePtNames[ sapply(timePtNames,  function (x) any(grep(sprintf("@%s$", x), stateNames)))]
+
+transitionMatrix <- transitionMatrix[stateNames, stateNames, drop=FALSE]
+
+
+#----------------------------------------------------------------------
+# Generate the figure, axis labels, and color bar legend
+#----------------------------------------------------------------------
+
+g <- graph.adjacency(transitionMatrix, mode="upper", weighted=TRUE)
+
+layout <- matrix(unlist(strsplit(stateNames, "@", fixed=TRUE)), ncol=2, byrow=TRUE)
+layout <- matrix(ncol=2, c(
+  as.numeric(factor(layout[,2], levels=timePtNames)), 
+  as.numeric(factor(layout[,1], levels=rev(clusterNames))) ))
+
+vertex_weights <- rescale(nodeCounts[names(V(g))])
+edge_weights   <- rescale(E(g)$weight, from=EDGE_PCT_RANGE)
+
+edgeColorRamp <- colorRamp(EDGE_COLOR)
+
+plot.igraph(
+  x                = g,
+  xlim             = c(0, .8),
+  ylim             = c(-1, 1),
+  layout           = layout,
+  vertex.label     = NA,
+  vertex.size      = rescale(sqrt(vertex_weights / 3.14)) * 25,
+  vertex.color     = NODE_COLOR,
+  edge.width       = edge_weights * 12 + 1,
+  edge.color       = rgb(edgeColorRamp(edge_weights) / 255) )
+
+xLabelPos = (seq_along(timePtNames)  - 1) *  2 / (length(timePtNames)  - 1) - 1
+yLabelPos = (seq_along(clusterNames) - 1) * -2 / (length(clusterNames) - 1) + 1
+
+text(-1.3, yLabelPos, clusterNames)
+text(xLabelPos, 1.5, timePtNames)
+text(xLabelPos, 1.3, sprintf("n = %i", timePtCounts), cex=.6)
+
+with(
+  cbreaks(EDGE_PCT_RANGE, pretty_breaks(10), percent),
+  legend(
+    x      = 1.5, 
+    y      = 1, 
+    fill   = rgb(edgeColorRamp(rescale(breaks)) / 255), 
+    legend = labels, 
+    title  = "Transition\nFrequency", 
+    bty    = "n" ))
+
+
+#----------------------------------------------------------------------
+# Save final figure to a pdf file
+#----------------------------------------------------------------------
+
+dev.copy2pdf(file="16S_OTU_DMM_Transitions_Over_Time.pdf")
+
+
+
+#----------------------------------------------------------------------
+# Cleanup
+#----------------------------------------------------------------------
+
+# remove('CLUSTER_COLUMN', 'EDGE_COLOR', 'MINIMUM_PERCENT', 'NODE_COLOR', 'REQUIRE_ALL_TP')
+# remove('SUBJECT_COLUMN', 'TIME_COLUMN', 'TIME_FUDGE', 'TIME_POINTS', 'EDGE_PCT_RANGE')
+# remove('closestTP', 'clusterNames', 'edge_weights', 'edgeColorRamp', 'g')
+# remove('i', 'indices', 'inRange', 'layout', 'md', 'nStates', 'residuals')
+# remove('stateNames', 'timePt', 'timePtCounts', 'timePtNames', 'transitionMatrix')
+# remove('vars', 'nodeCounts', 'vertex_weights', 'xLabelPos', 'yLabelPos')
+
